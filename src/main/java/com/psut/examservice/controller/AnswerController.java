@@ -38,6 +38,7 @@ public class AnswerController {
     @GetMapping("/examId/{examId}")
     public ResponseEntity<List> getExamsByExaminerId(@PathVariable String examId) {
         List<Answer> answers = answerDAO.findByExamId(examId);
+
         return new ResponseEntity<List>(answers, HttpStatus.OK);
     }
 
@@ -52,5 +53,14 @@ public class AnswerController {
         answer.setId(sequenceService.generateSequence(Answer.SEQUENCE_NAME));
         Answer save = answerDAO.save(answer);
         return new ResponseEntity<Answer>(save, HttpStatus.OK);
+    }
+
+    @PostMapping("/solve-exam")
+    public ResponseEntity<Void> submitAnswer(@RequestBody List<Answer> answer) {
+        for(Answer ans:answer){
+            ans.setId(sequenceService.generateSequence(Answer.SEQUENCE_NAME));
+        }
+        answerDAO.saveAll(answer);
+        return new ResponseEntity<Void>( HttpStatus.OK);
     }
 }

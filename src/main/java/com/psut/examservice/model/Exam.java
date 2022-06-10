@@ -26,7 +26,6 @@ public class Exam {
     @Id
     private long id;
 
-    @DBRef
     private Set<Question> questions;
 
     @Indexed
