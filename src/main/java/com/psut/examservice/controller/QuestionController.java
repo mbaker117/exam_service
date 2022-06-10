@@ -60,4 +60,14 @@ public class QuestionController {
     public ResponseEntity<Type[]> getTypes() {
         return new ResponseEntity<Type[]>(Type.values(), HttpStatus.OK);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteQuestion(long id) {
+        Optional<Question> questionById = questionDAO.findById(id);
+        if(questionById.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        questionDAO.delete(questionById.get());
+        return new ResponseEntity<>( HttpStatus.OK);
+    }
 }
