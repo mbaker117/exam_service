@@ -1,6 +1,7 @@
 package com.psut.examservice.service.impl;
 
 import com.google.common.base.Preconditions;
+import com.psut.examservice.beans.ExamGenerateRequest;
 import com.psut.examservice.dao.ExamDAO;
 import com.psut.examservice.dao.QuestionDAO;
 import com.psut.examservice.enums.Type;
@@ -27,6 +28,7 @@ public class DefaultExamService implements ExamService {
     public static final String EXAMINER_ID_IS_EMPTY = "examinerId is Empty";
     public static final String EXAMINE_ID_IS_EMPTY = "examineId is Empty";
     public static final String TYPE_IS_NULL = "type is null";
+    public static final String REQUEST_IS_NULL = "request is NULL";
 
     @Autowired
     private QuestionDAO questionDAO;
@@ -39,13 +41,14 @@ public class DefaultExamService implements ExamService {
 
 
     @Override
-    public Optional<Exam> generateExam(String examinerId, String examineId, int numberOfQuestions, Type type) {
-        Preconditions.checkArgument(Strings.isNotBlank(examinerId), EXAMINER_ID_IS_EMPTY);
-        Preconditions.checkArgument(Strings.isNotBlank(examineId), EXAMINE_ID_IS_EMPTY);
-        Preconditions.checkArgument(Objects.nonNull(type), TYPE_IS_NULL);
+    public Optional<Exam> generateExam(ExamGenerateRequest request) {
+        Preconditions.checkArgument(Objects.nonNull(request), REQUEST_IS_NULL);
+        Preconditions.checkArgument(Strings.isNotBlank(request.getExaminerId()), EXAMINER_ID_IS_EMPTY);
+        Preconditions.checkArgument(Strings.isNotBlank(request.getExamineId()), EXAMINE_ID_IS_EMPTY);
+        Preconditions.checkArgument(Objects.nonNull(request.getType()), TYPE_IS_NULL);
 
 
-        List<Question> questions = questionDAO.findByType(type);
+        List<Question> questions = questionDAO.findByType(request.getType());
 
         long questionNumbers = questions.size();
         if (questionNumbers <= 0) {
@@ -53,8 +56,8 @@ public class DefaultExamService implements ExamService {
             return Optional.empty();
         }
 
-        Set<Question> examQuestion = getExamQuestion(questions, numberOfQuestions);
-        Exam exam = getExam(examinerId, examineId, examQuestion,type);
+        Set<Question> examQuestion = getExamQuestion(questions, request.getNumberOfQuestions());
+        Exam exam = getExam(request, examQuestion);
 
 
         return Optional.of(exam);
@@ -66,22 +69,26 @@ public class DefaultExamService implements ExamService {
     }
 
     @Override
-    public Optional<Exam> generateExam(String examinerId, String examineId,Type type, List<Question> questions) {
-        Preconditions.checkArgument(Strings.isNotBlank(examinerId), EXAMINER_ID_IS_EMPTY);
-        Preconditions.checkArgument(Strings.isNotBlank(examineId), EXAMINE_ID_IS_EMPTY);
-        Preconditions.checkArgument(Objects.nonNull(type), TYPE_IS_NULL);
+    public Optional<Exam> generateExam(ExamGenerateRequest request, List<Question> questions) {
+        Preconditions.checkArgument(Objects.nonNull(request), REQUEST_IS_NULL);
+        Preconditions.checkArgument(Strings.isNotBlank(request.getExaminerId()), EXAMINER_ID_IS_EMPTY);
+        Preconditions.checkArgument(Strings.isNotBlank(request.getExamineId()), EXAMINE_ID_IS_EMPTY);
+        Preconditions.checkArgument(Objects.nonNull(request.getType()), TYPE_IS_NULL);
+
 
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(questions),"questions is empty");
-        Exam exam = getExam(examinerId, examineId, new HashSet<>(questions),type);
+        Exam exam = getExam(request, new HashSet<>(questions));
         return Optional.of(exam);
     }
 
-    private Exam getExam(String examinerId, String examineId, Set<Question> examQuestion, Type type) {
+    private Exam getExam(ExamGenerateRequest request, Set<Question> examQuestion) {
         Exam exam = new Exam();
-        exam.setExamineId(examineId);
-        exam.setExaminerId(examinerId);
+        exam.setExamineId(request.getExamineId());
+        exam.setExaminerId(request.getExaminerId());
         exam.setQuestions(examQuestion);
-        exam.setType(type);
+        exam.setType(request.getType());
+        exam.setTitle(request.getTitle());
+        exam.setDescription(request.getDescription());
         exam.setId(sequenceService.generateSequence(Exam.SEQUENCE_NAME));
         exam.setCreationDate(LocalDateTime.now());
         exam = examDAO.save(exam);

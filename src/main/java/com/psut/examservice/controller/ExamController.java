@@ -1,9 +1,9 @@
 package com.psut.examservice.controller;
 
+import com.psut.examservice.beans.ExamGenerateDTO;
+import com.psut.examservice.beans.ExamGenerateRequest;
 import com.psut.examservice.dao.ExamDAO;
-import com.psut.examservice.enums.Type;
 import com.psut.examservice.model.Exam;
-import com.psut.examservice.model.Question;
 import com.psut.examservice.service.ExamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/exams")
@@ -45,8 +46,8 @@ public class ExamController {
     }
 
     @PostMapping("/generateByType")
-    public ResponseEntity<Exam> generateExamByType(@RequestParam String examinerId, @RequestParam String examineId, @RequestParam Type type, @RequestParam int numberOfQuestions) {
-        Optional<Exam> exam = examService.generateExam(examinerId, examineId, numberOfQuestions, type);
+    public ResponseEntity<Exam> generateExamByType(@RequestBody ExamGenerateRequest request) {
+        Optional<Exam> exam = examService.generateExam(request);
         if (exam.isPresent()) {
             return new ResponseEntity<Exam>(exam.get(), HttpStatus.OK);
         }
@@ -54,11 +55,21 @@ public class ExamController {
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<Exam> generateExam(@RequestParam String examinerId, @RequestParam String examineId, @RequestBody List<Question> questions, @RequestParam Type type) {
-        Optional<Exam> exam = examService.generateExam(examinerId, examineId, type, questions);
+    public ResponseEntity<Exam> generateExam(@RequestBody ExamGenerateDTO examGenerateDTO) {
+        Optional<Exam> exam = examService.generateExam(examGenerateDTO.getExamInfo(), examGenerateDTO.getQuestions());
         if (exam.isPresent()) {
             return new ResponseEntity<Exam>(exam.get(), HttpStatus.OK);
         }
         return new ResponseEntity<Exam>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/questions/examID/{examid}")
+    public ResponseEntity<Set> getExamsByID(@PathVariable long examid) {
+        Optional<Exam> exam = examDAO.findById(examid);
+        Exam exam1 = exam.orElse(null);
+        if (exam1 != null) {
+            return new ResponseEntity<Set>(exam1.getQuestions(), HttpStatus.OK);
+        }
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 }

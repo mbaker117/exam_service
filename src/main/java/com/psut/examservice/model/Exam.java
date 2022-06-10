@@ -39,6 +39,10 @@ public class Exam {
 
     private Type type;
 
+    private String title;
+
+    private String description;
+
 
     @PostConstruct
     public void postConstruct(){
